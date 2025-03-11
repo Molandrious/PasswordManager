@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  db_postgres:
+    image: postgres:16.2-bookworm
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpassword
+      POSTGRES_DB: testdb
