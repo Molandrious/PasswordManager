@@ -11,18 +11,15 @@ from alembic.config import Config
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from loguru import logger
-from pytest_docker.plugin import get_docker_services
+from pytest_docker.plugin import containers_scope, get_docker_services
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from src.bootstrap import FastAPIContainerized, make_app
-from src.databases.postgres.client import SQLAlchemyClient
 from src.settings import Settings
 from tests.factories import FactoryAsyncSession
 
 
 def pytest_configure(config):  # noqa
-    config.addinivalue_line('markers', 'require_db: mark test to require a database')
-
     settings = Settings()
     if settings.env.tests.create_docker_postgres_for_tests:
         settings.env.postgres.dsn = settings.env.tests.docker_test_db_dsn
@@ -59,6 +56,11 @@ async def settings() -> Settings:
         settings.env.postgres.dsn = settings.env.tests.local_test_db_dsn
 
     return settings
+
+
+@pytest.fixture(scope=containers_scope)
+def docker_compose_project_name() -> str:
+    return 'password_manager_tests_postgres'
 
 
 @pytest.fixture(scope='session')
@@ -126,7 +128,7 @@ async def _do_migrations_for_test_db(
 @pytest.fixture(scope='session')
 async def app(settings: Settings) -> FastAPIContainerized:
     app = make_app()
-    app.container.databases.postgres.override(SQLAlchemyClient(settings=settings.env.postgres))
+    app.container.config.override(settings.model_dump())
     return app
 
 
