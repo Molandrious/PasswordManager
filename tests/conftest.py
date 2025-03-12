@@ -120,7 +120,7 @@ async def _do_migrations_for_test_db(
     alembic_cfg.set_main_option('script_location', settings.root_path.joinpath('migrations').as_posix())
     alembic_cfg.set_main_option('sqlalchemy.url', settings.env.postgres.dsn.unicode_string())
     command.downgrade(alembic_cfg, 'base')
-    (command.upgrade(alembic_cfg, 'head'))
+    command.upgrade(alembic_cfg, 'head')
 
     return
 

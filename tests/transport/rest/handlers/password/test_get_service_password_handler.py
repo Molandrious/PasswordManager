@@ -20,10 +20,7 @@ class TestGetServicePasswordHandler:
         self.client = test_client
         self.url = partial(app.url_path_for, get_service_password_handler.__name__)
 
-    async def test_ok(
-        self,
-        service_password_factory: ServicePasswordFactory
-    ) -> None:
+    async def test_ok(self, service_password_factory: ServicePasswordFactory) -> None:
         password_service_orm = await service_password_factory.create_async()
 
         response = await self.client.get(url=self.url(service_name=password_service_orm.service_name))
@@ -36,4 +33,3 @@ class TestGetServicePasswordHandler:
         response = await self.client.get(url=self.url(service_name='not_exist'))
 
         assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
-

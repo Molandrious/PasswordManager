@@ -92,5 +92,3 @@ class ISqlAlchemyRepository[ORM: BaseORM, Entity: BaseEntity](ABC):
 
     async def update_object(self, db_object: ORM) -> None:
         await self._session.merge(db_object)
-
-

@@ -1,7 +1,6 @@
-from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
-from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -24,4 +23,3 @@ class AsyncDBTransaction:
 async def init_transaction(transaction: AsyncDBTransaction):
     async with transaction.use() as session:
         yield session
-

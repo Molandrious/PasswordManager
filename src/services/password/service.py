@@ -48,4 +48,3 @@ class PasswordService(EncryptUtils):
             )
             for service_password in service_password_list
         ]
-

@@ -5,8 +5,6 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from starlette import status
 
-from src.services.password.utils import EncryptUtils
-from src.settings import Settings
 from src.transport.rest.routers.password.handlers import get_service_password_handler
 from tests.factories import ServicePasswordFactory
 

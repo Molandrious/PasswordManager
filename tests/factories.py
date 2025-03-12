@@ -22,4 +22,3 @@ class ServicePasswordFactory(SQLAlchemyFactory[PasswordORM]):
     @classmethod
     def hashed_password(cls) -> bytes:
         return EncryptUtils(get_settings().env.secret_key).encrypt_password(cls.__faker__.password())
-

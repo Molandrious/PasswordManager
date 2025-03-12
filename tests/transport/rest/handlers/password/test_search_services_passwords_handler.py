@@ -39,4 +39,3 @@ class TestSearchServicesPasswordsHandler:
 
         assert response.status_code == status.HTTP_200_OK, response.text
         assert len(response.json()['items']) == 0
-

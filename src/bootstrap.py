@@ -9,8 +9,10 @@ from src.containers.app import App
 from src.transport.rest.setup_entrypoints import init_endpoints, init_middlewares
 from src.transport.rest.setup_errors import init_fastapi_error_handlers
 
+
 class FastAPIContainerized(FastAPI):
     container: App
+
 
 @asynccontextmanager
 async def _lifespan(

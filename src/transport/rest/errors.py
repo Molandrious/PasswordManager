@@ -23,7 +23,6 @@ class ServerError(Exception):
         }
 
 
-
 class ObjectNotFoundError(ServerError):
     status_code = status.HTTP_404_NOT_FOUND
     message = 'Object not found'
