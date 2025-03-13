@@ -7,3 +7,9 @@ class PasswordRepository(ISqlAlchemyRepository[PasswordORM, ServicePassword]):
     _model = PasswordORM
     _entity = ServicePassword
     _model_search_fields = [PasswordORM.service_name]
+
+
+class PasswordRepository2(ISqlAlchemyRepository[PasswordORM, ServicePassword]):
+    _model = PasswordORM
+    _entity = ServicePassword
+    _model_search_fields = [PasswordORM.service_name]

@@ -5,7 +5,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.responses import Response
 
 from src.transport.rest.errors import ServerError
-from src.transport.rest.setup_errors import process_server_error
+from src.transport.rest.utils import process_server_error
 
 
 class ErrorsHandlerMiddleware(BaseHTTPMiddleware):

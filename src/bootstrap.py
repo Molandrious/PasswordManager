@@ -1,37 +1,60 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import cast
 
+from dishka import AsyncContainer, make_async_container
+from dishka.integrations import fastapi
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
-import src
-from src.containers.app import App
-from src.transport.rest.setup_entrypoints import init_endpoints, init_middlewares
-from src.transport.rest.setup_errors import init_fastapi_error_handlers
-
-
-class FastAPIContainerized(FastAPI):
-    container: App
+from src.containers_dishka.core import CoreProvider
+from src.containers_dishka.database import DatabaseProvider
+from src.containers_dishka.repositories import RepositoriesProvider
+from src.containers_dishka.services import ServicesProvider
+from src.settings import Settings
+from src.transport.rest import FastAPIContainerized
+from src.transport.rest.setup import setup_error_handlers, setup_middlewares, setup_routers
 
 
 @asynccontextmanager
 async def _lifespan(
-    app: FastAPI,  # noqa
+    app: FastAPIContainerized,
 ) -> AsyncGenerator[None]:
     yield
+    await app.state.dishka_container.close()
 
 
-def make_app() -> FastAPIContainerized:
-    app = FastAPIContainerized(
+def setup_app() -> FastAPI:
+    app = FastAPI(
         lifespan=_lifespan,
         default_response_class=ORJSONResponse,
     )
 
-    app.container = App()
-    app.container.wire(packages=[src.transport.rest])
-
-    init_endpoints(app)
-    init_middlewares(app)
-    init_fastapi_error_handlers(app)
+    setup_routers(app)
+    setup_middlewares(app)
+    setup_error_handlers(app)
 
     return app
+
+
+def setup_container(
+    settings: Settings | None = None,
+) -> AsyncContainer:
+    return make_async_container(
+        CoreProvider(settings=settings or Settings()),
+        DatabaseProvider(),
+        RepositoriesProvider(),
+        ServicesProvider(),
+    )
+
+
+def make_app(
+    container: AsyncContainer | None = None,
+) -> FastAPIContainerized:
+    app = setup_app()
+
+    container = container or setup_container()
+    fastapi.setup_dishka(container=container, app=app)
+
+    return cast(FastAPIContainerized, app)
+

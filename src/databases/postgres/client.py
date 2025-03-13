@@ -1,8 +1,7 @@
 import contextlib
-from asyncio import current_task
 
 from sqlalchemy.exc import DatabaseError
-from sqlalchemy.ext.asyncio import async_scoped_session, async_sessionmaker, AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession, create_async_engine
 
 from src.databases.postgres.orm.base import BaseDeclarative
 from src.databases.postgres.uow import AsyncDBTransaction
@@ -22,17 +21,14 @@ class SQLAlchemyClient:
             max_overflow=settings.max_overflow,
             pool_pre_ping=settings.pool_pre_ping,
         )
-        self._ctx_session_manager = async_scoped_session(
-            async_sessionmaker(expire_on_commit=False, bind=self.engine),
-            scopefunc=current_task,
-        )
+        self._session_factory = async_sessionmaker(expire_on_commit=False, bind=self.engine)
 
     @property
     def session(self) -> AsyncSession:
-        return self._ctx_session_manager()
+        return self._session_factory()
 
     @property
-    def get_transaction_uow(self) -> AsyncDBTransaction:
+    def uow(self) -> AsyncDBTransaction:
         return AsyncDBTransaction(session=self.session)
 
     async def clear_all_tables(self) -> None:

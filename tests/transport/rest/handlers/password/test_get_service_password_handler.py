@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from starlette import status
 
+from src.transport.rest import FastAPIContainerized
 from src.transport.rest.routers.password.handlers import get_service_password_handler
 from tests.factories import ServicePasswordFactory
 
@@ -14,7 +15,7 @@ class TestGetServicePasswordHandler:
     @pytest.fixture(autouse=True)
     def setup(
         self,
-        app: FastAPI,
+        app: FastAPIContainerized,
         test_client: AsyncClient,
     ) -> None:
         self.client = test_client

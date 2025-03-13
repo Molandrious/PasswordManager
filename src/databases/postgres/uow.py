@@ -9,7 +9,7 @@ class AsyncDBTransaction:
         self.session = session
 
     @asynccontextmanager
-    async def use(self) -> AsyncGenerator[AsyncSession, None]:
+    async def __call__(self) -> AsyncGenerator[AsyncSession, None]:
         try:
             yield self.session
             await self.session.commit()
@@ -18,8 +18,3 @@ class AsyncDBTransaction:
             raise
         finally:
             await self.session.close()
-
-
-async def init_transaction(transaction: AsyncDBTransaction):
-    async with transaction.use() as session:
-        yield session

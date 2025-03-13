@@ -1,10 +1,10 @@
 from functools import partial
 
 import pytest
-from fastapi import FastAPI
 from httpx import AsyncClient
 from starlette import status
 
+from src.transport.rest import FastAPIContainerized
 from src.transport.rest.routers.password.handlers import search_services_passwords_handler
 from tests.factories import ServicePasswordFactory
 
@@ -14,7 +14,7 @@ class TestSearchServicesPasswordsHandler:
     @pytest.fixture(autouse=True)
     def setup(
         self,
-        app: FastAPI,
+        app: FastAPIContainerized,
         test_client: AsyncClient,
     ) -> None:
         self.client = test_client

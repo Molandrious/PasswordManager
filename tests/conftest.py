@@ -1,20 +1,22 @@
 import asyncio
 import sys
 from asyncio import AbstractEventLoop
-from collections.abc import AsyncGenerator, Generator
-from typing import Any
+from collections.abc import Generator
+from typing import Any, AsyncGenerator
 
 import psycopg2
 import pytest
 from alembic import command
 from alembic.config import Config
+from dishka import AsyncContainer
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from loguru import logger
-from pytest_docker.plugin import containers_scope, get_docker_services
+from pytest_docker.plugin import get_docker_services
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from src.bootstrap import FastAPIContainerized, make_app
+from src.bootstrap import FastAPIContainerized, make_app, setup_container
+from src.databases.postgres.client import SQLAlchemyClient
 from src.settings import Settings
 from tests.factories import FactoryAsyncSession
 
@@ -58,15 +60,9 @@ async def settings() -> Settings:
     return settings
 
 
-@pytest.fixture(scope=containers_scope)
-def docker_compose_project_name() -> str:
-    return 'password_manager_tests_postgres'
-
-
 @pytest.fixture(scope='session')
 async def init_test_db_docker_container(
     docker_compose_command: str,
-    docker_compose_project_name: str,
     docker_setup: str,
     docker_cleanup: str,
     settings: Settings,
@@ -87,7 +83,7 @@ async def init_test_db_docker_container(
     docker_service_cm = get_docker_services(
         docker_compose_command,
         settings.root_path.joinpath('tests/docker-compose.yml'),
-        docker_compose_project_name,
+        'password_manager_tests_postgres',
         docker_setup,
         docker_cleanup,
     )
@@ -125,20 +121,27 @@ async def _do_migrations_for_test_db(
     return
 
 
-@pytest.fixture(scope='session')
-async def app(settings: Settings) -> FastAPIContainerized:
-    app = make_app()
-    app.container.config.override(settings.model_dump())
-    return app
+@pytest.fixture(name='container')
+async def test_container(settings: Settings) -> AsyncGenerator[AsyncContainer, Any]:
+    container = setup_container(settings=settings)
+    yield container
+    await container.close()
+
+
+@pytest.fixture()
+async def app(container: AsyncContainer) -> FastAPIContainerized:
+    return make_app(container=container)
 
 
 @pytest.fixture(autouse=True)
-async def _create_tables(request: pytest.FixtureRequest, app: FastAPIContainerized) -> None:
+async def _create_tables(request: pytest.FixtureRequest, container: AsyncContainer) -> None:
     if not any(marker.name == 'require_db' for marker in request.node.iter_markers()):
         return
 
-    await app.container.databases.postgres().clear_all_tables()
-    await app.container.databases.postgres().create_all_tables()
+    db = await container.get(SQLAlchemyClient)
+
+    await db.clear_all_tables()
+    await db.create_all_tables()
 
 
 @pytest.fixture()
