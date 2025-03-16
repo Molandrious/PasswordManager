@@ -1,6 +1,6 @@
-from src.models.base import BaseEntity, CreateAndUpdateAtMixin
+from src.packages.common.models import EntityModel
 
 
-class ServicePassword(BaseEntity, CreateAndUpdateAtMixin):
+class ServicePassword(EntityModel):
     service_name: str
     hashed_password: bytes

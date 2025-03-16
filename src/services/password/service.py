@@ -1,9 +1,9 @@
 from attrs import define
 from pydantic import SecretBytes
 
-from src.databases.postgres.orm.password import PasswordORM
+from src.databases.sqlalchemy.orm.password import PasswordORM
 from src.errors import ObjectNotFoundError
-from src.repositories.password import PasswordRepository, PasswordRepository2
+from src.repositories.sqlalchemy.password import PasswordRepository
 from src.services.password.dto import DecryptedServicePasswordDTO
 from src.services.password.utils import EncryptUtils
 
@@ -11,7 +11,6 @@ from src.services.password.utils import EncryptUtils
 @define
 class PasswordService(EncryptUtils):
     password_repository: PasswordRepository
-    password_repository2: PasswordRepository2
     secret_key: SecretBytes
 
     async def create_password_for_service(self, service_name: str, password: str) -> None:

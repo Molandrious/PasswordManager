@@ -13,7 +13,7 @@ config = context.config
 load_dotenv(config.get_main_option('env_file'), override=True)
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from src.databases.postgres.orm.base import BaseDeclarative
+from src.databases.sqlalchemy.orm.base import BaseDeclarative
 from src.settings import get_settings
 
 

@@ -1,14 +1,14 @@
-from src.transport.rest.base_schema import BaseApiSchema
+from src.packages.common.models import CamelCaseAliasModel
 
 
-class CreatePasswordPayload(BaseApiSchema):
+class CreatePasswordPayload(CamelCaseAliasModel):
     password: str
 
 
-class GetPasswordResponse(BaseApiSchema):
+class GetPasswordResponse(CamelCaseAliasModel):
     service_name: str
     password: str
 
 
-class SearchPasswordsResponse(BaseApiSchema):
+class SearchPasswordsResponse(CamelCaseAliasModel):
     items: list[GetPasswordResponse]

@@ -1,34 +1,51 @@
 version: "3.8"
 services:
-  db_postgres:
-    image: postgres:16.2-bookworm
-    env_file:
-      - .env.docker
-    volumes:
-      - ./postgres/data:/var/lib/postgresql/data
-    networks:
-      - intranet
-    ports:
-      - "5434:5432"
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "postgres" ]
-      interval: 5s
-      timeout: 10s
-      retries: 3
+  #  db_postgres:
+  #    image: postgres:16.2-bookworm
+  #    env_file:
+  #      - .env.docker
+  #    volumes:
+  #      - ./postgres/data:/var/lib/postgresql/data
+  #    networks:
+  #      - intranet
+  #    ports:
+  #      - "5434:5432"
+  #    restart: unless-stopped
+  #    healthcheck:
+  #      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+  #      interval: 5s
+  #      timeout: 10s
+  #      retries: 3
 
-  fastapi:
+  app:
+    &app
     build: .
     env_file:
       - .env.docker
-    restart: unless-stopped
+    restart: always
     ports:
       - "${REST_PORT}:${REST_PORT}"
     networks:
       - intranet
-    depends_on:
-      db_postgres:
-        condition: service_healthy
+  #    depends_on:
+  #      db_postgres:
+  #        condition: service_healthy
+
+  taskiq-worker:
+    <<: *app
+    ports: [ ]
+    command: [ taskiq, worker, -fsd, src.transport.taskiq:broker, -w, "1", --max-fails, "1" ]
+
+  redis:
+    restart: always
+    image: redis:latest
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
 
 networks:
   intranet:

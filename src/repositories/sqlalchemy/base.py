@@ -8,13 +8,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
-from src.databases.postgres.constants import UNIQUE_VIOLATION_ERROR_CODE
-from src.databases.postgres.orm.base import BaseORM
+from src.packages.common.models import EntityModel
+from src.databases.sqlalchemy.constants import UNIQUE_VIOLATION_ERROR_CODE
+from src.databases.sqlalchemy.orm.base import BaseORM
 from src.errors import ObjectAlreadyExistsError
-from src.models.base import BaseEntity
 
 
-class ISqlAlchemyRepository[ORM: BaseORM, Entity: BaseEntity](ABC):
+class ISqlAlchemyRepository[ORM: BaseORM, Entity: Entity](ABC):
     _model: ORM
     _session: AsyncSession
     _entity: Entity

@@ -1,8 +1,8 @@
 import asyncio
 import sys
 from asyncio import AbstractEventLoop
-from collections.abc import Generator
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
+from typing import Any
 
 import psycopg2
 import pytest
@@ -12,28 +12,28 @@ from dishka import AsyncContainer
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from loguru import logger
+from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 from pytest_docker.plugin import get_docker_services
-from sqlalchemy.ext.asyncio import create_async_engine
 
-from src.bootstrap import FastAPIContainerized, make_app, setup_container
-from src.databases.postgres.client import SQLAlchemyClient
-from src.settings import Settings
-from tests.factories import FactoryAsyncSession
+from src.bootstrap import FastAPIContainerized, lifespan, make_app
+from src.container.setup import setup_container
+from src.databases.sqlalchemy.client import SQLAlchemyClient
+from src.settings import get_settings, Settings
 
 
 def pytest_configure(config):  # noqa
-    settings = Settings()
-    if settings.env.tests.create_docker_postgres_for_tests:
-        settings.env.postgres.dsn = settings.env.tests.docker_test_db_dsn
-    else:
-        settings.env.postgres.dsn = settings.env.tests.local_test_db_dsn
+    logger.debug('Configuring pytest...')
 
-    FactoryAsyncSession.configure(bind=create_async_engine(url=settings.env.postgres.dsn.unicode_string()))
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_modifyitems(items):
+    for item in items:
+        item.add_marker(pytest.mark.anyio)
 
 
 @pytest.fixture(scope='session', autouse=True)
 def anyio_backend(request):  # noqa
-    return 'asyncio'
+    return 'anyio'
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -50,14 +50,7 @@ def event_loop() -> Generator[AbstractEventLoop, Any, None]:
 
 @pytest.fixture(scope='session')
 async def settings() -> Settings:
-    settings = Settings()
-
-    if settings.env.tests.create_docker_postgres_for_tests:
-        settings.env.postgres.dsn = settings.env.tests.docker_test_db_dsn
-    else:
-        settings.env.postgres.dsn = settings.env.tests.local_test_db_dsn
-
-    return settings
+    return get_settings()
 
 
 @pytest.fixture(scope='session')
@@ -71,7 +64,7 @@ async def init_test_db_docker_container(
     is_docker_db_created = False
 
     if not settings.env.tests.create_docker_postgres_for_tests:
-        logger.info('create_docker_postgres_for_tests is False. Skipping Docker database creation.')
+        logger.info('Skipping Docker database creation.')
         yield is_docker_db_created
         return
 
@@ -121,16 +114,26 @@ async def _do_migrations_for_test_db(
     return
 
 
-@pytest.fixture(name='container')
+@pytest.fixture(name='container', scope='session')
 async def test_container(settings: Settings) -> AsyncGenerator[AsyncContainer, Any]:
     container = setup_container(settings=settings)
     yield container
     await container.close()
 
 
-@pytest.fixture()
-async def app(container: AsyncContainer) -> FastAPIContainerized:
-    return make_app(container=container)
+@pytest.fixture(scope='session', autouse=True)
+async def _configure_factories(
+    container: AsyncContainer,
+) -> None:
+    sql_alchemy_client = await container.get(SQLAlchemyClient)
+    SQLAlchemyFactory.__async_session__ = sql_alchemy_client.session_factory
+
+
+@pytest.fixture(autouse=True)
+async def app(container: AsyncContainer) -> AsyncGenerator[FastAPIContainerized, None]:
+    app = make_app(container=container)
+    async with lifespan(app=make_app(container=container)) as _:
+        yield app
 
 
 @pytest.fixture(autouse=True)

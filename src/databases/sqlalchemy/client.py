@@ -3,16 +3,13 @@ import contextlib
 from sqlalchemy.exc import DatabaseError
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession, create_async_engine
 
-from src.databases.postgres.orm.base import BaseDeclarative
-from src.databases.postgres.uow import AsyncDBTransaction
+from src.databases.sqlalchemy.orm.base import BaseDeclarative
+from src.databases.sqlalchemy.uow import SQLAlchemyUoW
 from src.settings import PostgresSettings
 
 
 class SQLAlchemyClient:
-    def __init__(self, settings: PostgresSettings | dict) -> None:
-        if isinstance(settings, dict):
-            settings = PostgresSettings.model_validate(settings)
-
+    def __init__(self, settings: PostgresSettings) -> None:
         self.engine = create_async_engine(
             url=settings.dsn.unicode_string(),
             echo=settings.echo,
@@ -21,15 +18,15 @@ class SQLAlchemyClient:
             max_overflow=settings.max_overflow,
             pool_pre_ping=settings.pool_pre_ping,
         )
-        self._session_factory = async_sessionmaker(expire_on_commit=False, bind=self.engine)
+        self.session_factory = async_sessionmaker(expire_on_commit=False, bind=self.engine)
 
     @property
     def session(self) -> AsyncSession:
-        return self._session_factory()
+        return self.session_factory()
 
     @property
-    def uow(self) -> AsyncDBTransaction:
-        return AsyncDBTransaction(session=self.session)
+    def uow(self) -> SQLAlchemyUoW:
+        return SQLAlchemyUoW(session=self.session)
 
     async def clear_all_tables(self) -> None:
         metadata = BaseDeclarative.metadata

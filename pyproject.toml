@@ -8,12 +8,16 @@ dependencies = [
     "attrs>=25.1.0",
     "cryptography>=44.0.2",
     "dishka>=1.4.2",
+    "epyxid>=0.3.3",
     "fastapi>=0.115.11",
     "granian>=2.0.1",
     "loguru>=0.7.3",
     "orjson>=3.10.15",
     "pydantic-settings>=2.8.1",
+    "pytest-randomly>=3.16.0",
     "sqlalchemy[asyncio]>=2.0.38",
+    "taskiq>=0.11.13",
+    "taskiq-redis>=1.0.3",
     "tzdata>=2025.1",
 ]
 
@@ -32,12 +36,16 @@ dev = [
     "pytest-asyncio>=0.25.3",
     "pytest-clarity>=1.0.1",
     "pytest-sugar>=1.0.0",
+    "pytest-env>=1.1.5",
 ]
 
 [tool.pytest.ini_options]
 minversion = "8.3"
 pythonpath = "src"
 testpaths = "tests"
+addopts = "-vv -ss --tb=short"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::UserWarning"
@@ -45,10 +53,10 @@ filterwarnings = [
 markers = [
     "require_db: mark test to require a database",
 ]
+env = [
+    "ENVIRONMENT=TESTS",
+]
 
-addopts = "-vv -ss --tb=short"
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
 
 
 [tool.black]

@@ -1,14 +1,27 @@
-from functools import lru_cache
+from enum import auto, StrEnum
 from pathlib import Path
-from typing import Annotated
 
-from pydantic import AfterValidator, DirectoryPath, Field, PostgresDsn, SecretBytes
+from pydantic import DirectoryPath, Field, PostgresDsn, RedisDsn, SecretBytes
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-UpperStr = Annotated[str, AfterValidator(lambda v: v.upper())]
 ROOT_PATH = Path(__file__).parent.parent.resolve()
 
 # https://docs.pydantic.dev/latest/concepts/pydantic_settings/#environment-variable-names
+
+
+class Environment(StrEnum):
+    @classmethod
+    def _missing_(cls, value: str) -> str | None:
+        value_lower = value.lower()
+        for member in cls:
+            if member.name.lower() == value_lower:
+                return member
+        return None
+
+    TESTS = auto()
+    LOCAL = auto()
+    DEV = auto()
+    PROD = auto()
 
 
 class _BaseSettings(BaseSettings):
@@ -22,21 +35,24 @@ class _BaseSettings(BaseSettings):
 
 
 class RESTSettings(_BaseSettings):
+    model_config = SettingsConfigDict(env_prefix='REST_')
+
     host: str = Field(default='127.0.0.1')
     port: int = Field(default=8000)
 
 
 class TestsSettings(_BaseSettings):
+    model_config = SettingsConfigDict(env_prefix='TEST_')
+
     create_docker_postgres_for_tests: bool = Field(default=True)
-    local_test_db_dsn: PostgresDsn = Field(
+    postgres_dsn: PostgresDsn | None = Field(
         default=PostgresDsn('postgresql+asyncpg://postgres:postgres@localhost:5432/testdb'),
-    )
-    docker_test_db_dsn: PostgresDsn = Field(
-        default=PostgresDsn('postgresql+asyncpg://testuser:testpassword@localhost:5433/testdb')
     )
 
 
 class PostgresSettings(_BaseSettings):
+    model_config = SettingsConfigDict(env_prefix='POSTGRES_')
+
     dsn: PostgresDsn
     echo: bool = Field(default=False)
     pool_size: int = Field(default=100)
@@ -45,19 +61,42 @@ class PostgresSettings(_BaseSettings):
     pool_pre_ping: bool = Field(default=True)
 
 
+class RedisSettings(_BaseSettings):
+    model_config = SettingsConfigDict(env_prefix='REDIS_')
+
+    dsn: RedisDsn = Field(default=RedisDsn('redis://localhost:6380/0'))
+
+
 class EnvSettings(_BaseSettings):
-    rest: RESTSettings = RESTSettings(_env_prefix='REST_')  # type: ignore
-    tests: TestsSettings = TestsSettings(_env_prefix='TEST_')  # type: ignore
-    postgres: PostgresSettings = PostgresSettings(_env_prefix='POSTGRES_')  # type: ignore
+    environment: Environment = Field(default=Environment.LOCAL)
+    rest: RESTSettings = RESTSettings()
+    tests: TestsSettings = TestsSettings()
+    postgres: PostgresSettings = PostgresSettings()
+    redis: RedisSettings = RedisSettings()
 
     secret_key: SecretBytes
 
 
 class Settings(BaseSettings):
     env: EnvSettings = EnvSettings()
+
     root_path: DirectoryPath = Path(__file__).parent.parent.resolve()
 
+    def __hash__(self):
+        return hash(str(self.env.environment))
 
-@lru_cache
+
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+
+    # TODO: оставить тут или перенести в pytest_configure?
+    if settings.env.environment == Environment.TESTS:
+        if settings.env.tests.create_docker_postgres_for_tests:
+            settings.env.postgres.dsn = PostgresDsn('postgresql+asyncpg://testuser:testpassword@localhost:5433/testdb')
+        else:
+            if not settings.env.tests.postgres_dsn:
+                raise ValueError('TEST_POSTGRES_DSN environment variable is not set')
+            settings.env.postgres.dsn = settings.env.tests.postgres_dsn
+
+    return settings
+

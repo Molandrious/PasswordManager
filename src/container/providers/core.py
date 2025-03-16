@@ -10,4 +10,4 @@ class CoreProvider(Provider):
 
     @provide(scope=Scope.APP)
     def settings_provider(self) -> Settings:
-        return Settings()
+        return self.settings

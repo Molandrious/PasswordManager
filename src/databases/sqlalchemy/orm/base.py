@@ -10,7 +10,7 @@ from sqlalchemy import Date as SQLAlchemyDate, DateTime as SQLAlchemyDateTime, M
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, declared_attr, Mapped, mapped_column
 
-from src.databases.postgres.constants import CONSTRAINT_NAMING_CONVENTIONS
+from src.databases.sqlalchemy.constants import CONSTRAINT_NAMING_CONVENTIONS
 
 
 class BaseDeclarative(DeclarativeBase):

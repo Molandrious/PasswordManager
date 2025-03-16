@@ -2,22 +2,24 @@ from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 
 
-class BaseDTO(BaseModel):
+class ConfiguredBaseModel(BaseModel):
     model_config = ConfigDict(
+        populate_by_name=True,
         from_attributes=True,
     )
 
 
-class BaseEntity(BaseModel):
+class CamelCaseAliasModel(ConfiguredBaseModel):
     model_config = ConfigDict(
-        from_attributes=True,
+        alias_generator=to_camel,
     )
 
+
+class EntityModel(ConfiguredBaseModel):
     id: UUID
-
-
-class CreateAndUpdateAtMixin(BaseModel):
     created_at: datetime
     updated_at: datetime
+

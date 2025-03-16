@@ -1,6 +1,6 @@
-from src.databases.postgres.orm.password import PasswordORM
+from src.databases.sqlalchemy.orm.password import PasswordORM
 from src.models.service_password import ServicePassword
-from src.repositories.base import ISqlAlchemyRepository
+from src.repositories.sqlalchemy.base import ISqlAlchemyRepository
 
 
 class PasswordRepository(ISqlAlchemyRepository[PasswordORM, ServicePassword]):

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.databases.postgres.orm.base import BaseORM
+from src.databases.sqlalchemy.orm.base import BaseORM
 
 
 class PasswordORM(BaseORM):
