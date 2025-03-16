@@ -4,11 +4,11 @@ from taskiq.schedule_sources import LabelScheduleSource
 from taskiq_redis import RedisAsyncResultBackend, RedisStreamBroker
 
 from src.container.setup import setup_container
-from src.settings import get_settings
+from src.settings import Environment, get_settings
 
 _settings = get_settings()
 
-if _settings.env.environment == 'tests':
+if _settings.env.environment == Environment.TESTS:
     broker = InMemoryBroker()
 else:
     result_backend = RedisAsyncResultBackend(redis_url=_settings.env.redis.dsn.unicode_string())
