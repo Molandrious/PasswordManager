@@ -3,22 +3,20 @@ set dotenv-filename := ".env"
 
 export PYTHONPATH := "src"
 
-remove := if "$(expr substr $(uname -s) 1 5)" == "Linux" { "rm -rf" } else { "rmdir" }
-
 run:
-   uv run python src/main.py
+    uv run python src/main.py
 
 run-docker:
-   docker-compose up --build
+    docker-compose up --build
 
 start-tsk-worker:
-    taskiq worker -fsd src.transport.taskiq.broker:broker  src  -w 1 --max-fails 1
+    taskiq worker -fsd src.integrations.taskiq.broker:taskiq_broker  src.integrations.taskiq.worker_tasks  -w 1 --max-fails 2
 
 start-tsk-scheduler:
-    taskiq scheduler -fsd src.transport.taskiq.broker:scheduler
+    taskiq scheduler -fsd src.integrations.taskiq.broker:taskiq_scheduler src.integrations.taskiq.scheduled_tasks
 
 test path="tests":
-    uv run pytest {{path}}
+    uv run pytest {{ path }}
 
 pre-commit-all:
     pre-commit run --all-files --show-diff-on-failure
@@ -30,6 +28,6 @@ alembic-upg:
     alembic upgrade head
 
 alembic-drop:
-	alembic downgrade base
+    alembic downgrade base
 
 recreate-db: alembic-drop && alembic-gen

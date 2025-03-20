@@ -8,17 +8,17 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
-from src.packages.common.models import EntityModel
 from src.databases.sqlalchemy.constants import UNIQUE_VIOLATION_ERROR_CODE
 from src.databases.sqlalchemy.orm.base import BaseORM
 from src.errors import ObjectAlreadyExistsError
+from src.packages.common.models import EntityModel
 
 
-class ISqlAlchemyRepository[ORM: BaseORM, Entity: Entity](ABC):
-    _model: ORM
+class ISqlAlchemyRepository[ORM: BaseORM, Entity: EntityModel](ABC):
     _session: AsyncSession
     _entity: Entity
-    _model_search_fields: list[InstrumentedAttribute[Any]] | None = None
+    _orm: ORM
+    _orm_search_fields: list[InstrumentedAttribute[Any]] | None = None
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
@@ -29,13 +29,13 @@ class ISqlAlchemyRepository[ORM: BaseORM, Entity: Entity](ABC):
         query: Select[tuple[ORM]],
         search: str | None = None,
     ) -> Select[tuple[ORM]]:
-        if search is not None and self._model_search_fields:
+        if search is not None and self._orm_search_fields:
             search = f'%{search}%'
             clauses = []
             models = set()
-            for search_field in self._model_search_fields:
+            for search_field in self._orm_search_fields:
                 search_field_model = search_field.parent.class_
-                if search_field_model != self._model:
+                if search_field_model != self._orm:
                     models.add(search_field_model)
                 clauses.append(search_field.ilike(search))
 
@@ -62,7 +62,7 @@ class ISqlAlchemyRepository[ORM: BaseORM, Entity: Entity](ABC):
         return cast(UUID, db_object.id)
 
     async def get_one_by(self, **kwargs) -> Entity | None:
-        query = select(self._model).filter_by(**kwargs).limit(1)
+        query = select(self._orm).filter_by(**kwargs).limit(1)
         db_object = await self._session.scalar(query)
         return self._entity.model_validate(db_object) if db_object else None
 
@@ -74,12 +74,12 @@ class ISqlAlchemyRepository[ORM: BaseORM, Entity: Entity](ABC):
         with_lock: bool = False,
         **filters: Any,
     ) -> list[ORM]:
-        query = select(self._model)
+        query = select(self._orm)
 
         query = self._apply_search(query=query, search=search)
 
         if ids:
-            query = query.where(self._model.id.in_(ids))
+            query = query.where(self._orm.id.in_(ids))
 
         if filters:
             query = query.filter_by(**filters)

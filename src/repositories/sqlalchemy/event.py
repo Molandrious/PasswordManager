@@ -1,10 +1,10 @@
 from src.databases.sqlalchemy.orm import EventORM
 
 from src.models.event import Event
-from src.repositories.sqlalchemy.base import ISqlAlchemyRepository
+from src.packages.sql_aclhemy_utils.repository import ISqlAlchemyRepository
 
 
 class EventRepository(ISqlAlchemyRepository[EventORM, Event]):
-    _model = EventORM
+    _orm = EventORM
     _entity = Event
-    _model_search_fields = [EventORM.message]
+    _orm_search_fields = [EventORM.message]

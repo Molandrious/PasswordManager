@@ -98,7 +98,7 @@ class TestSearchServicesPasswordsHandler:
         response = await self.client.get(url=self.url(), params={'service_name': search_part})
 
         assert response.status_code == status.HTTP_200_OK, response.text
-        assert len(response.json()['items']) == 2
+        assert len(response.json()['items']) == 2, response.text
 
     async def test_empty(
         self,

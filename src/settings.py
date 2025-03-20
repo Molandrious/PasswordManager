@@ -1,7 +1,8 @@
 from enum import auto, StrEnum
+from functools import lru_cache
 from pathlib import Path
 
-from pydantic import DirectoryPath, Field, PostgresDsn, RedisDsn, SecretBytes
+from pydantic import AmqpDsn, DirectoryPath, Field, FilePath, PostgresDsn, RedisDsn, SecretBytes
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_PATH = Path(__file__).parent.parent.resolve()
@@ -34,6 +35,12 @@ class _BaseSettings(BaseSettings):
     )
 
 
+class LoggerSettings(_BaseSettings):
+    model_config = SettingsConfigDict(env_prefix='LOGURU_')
+    path: FilePath | None = Field(default=None)
+    level: str = Field(default='INFO')
+
+
 class RESTSettings(_BaseSettings):
     model_config = SettingsConfigDict(env_prefix='REST_')
 
@@ -53,7 +60,7 @@ class TestsSettings(_BaseSettings):
 class PostgresSettings(_BaseSettings):
     model_config = SettingsConfigDict(env_prefix='POSTGRES_')
 
-    dsn: PostgresDsn
+    dsn: PostgresDsn = PostgresDsn('postgresql+asyncpg://postgres:postgres@localhost:5432/postgres')
     echo: bool = Field(default=False)
     pool_size: int = Field(default=100)
     pool_timeout: int = Field(default=10)
@@ -67,12 +74,21 @@ class RedisSettings(_BaseSettings):
     dsn: RedisDsn = Field(default=RedisDsn('redis://localhost:6380/0'))
 
 
+class RabbitSettings(_BaseSettings):
+    model_config = SettingsConfigDict(env_prefix='RABBIT_')
+
+    dsn: AmqpDsn = Field(default=AmqpDsn('amqp://guest:guest@localhost:5672/'))
+
+
 class EnvSettings(_BaseSettings):
     environment: Environment = Field(default=Environment.LOCAL)
+
+    logger: LoggerSettings = LoggerSettings()
     rest: RESTSettings = RESTSettings()
     tests: TestsSettings = TestsSettings()
     postgres: PostgresSettings = PostgresSettings()
     redis: RedisSettings = RedisSettings()
+    rabbit: RabbitSettings = RabbitSettings()
 
     secret_key: SecretBytes
 
@@ -86,6 +102,7 @@ class Settings(BaseSettings):
         return hash(str(self.env.environment))
 
 
+@lru_cache
 def get_settings() -> Settings:
     settings = Settings()
 

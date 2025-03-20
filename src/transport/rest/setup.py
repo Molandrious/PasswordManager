@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 from src.transport.rest.errors import ServerError
 from src.transport.rest.middlewares.error_handler import ErrorsHandlerMiddleware
-from src.transport.rest.routers.event.handlers import event_router
+from src.transport.rest.routers.test_integrations.handlers import test_integrations
 from src.transport.rest.routers.password.handlers import password_router
 from src.transport.rest.utils import DishkaAPIRouter, process_server_error
 
@@ -13,7 +13,7 @@ def setup_routers(app: FastAPI) -> None:
     global_router = DishkaAPIRouter()
 
     global_router.include_router(password_router)
-    global_router.include_router(event_router)
+    global_router.include_router(test_integrations)
 
     app.include_router(global_router)
 
