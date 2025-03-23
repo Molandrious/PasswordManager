@@ -1,10 +1,9 @@
 from dishka.integrations import taskiq
+from src.ios.setup import setup_ios_container
+from src.settings import Environment, get_settings
 from taskiq import InMemoryBroker, TaskiqScheduler
 from taskiq.schedule_sources import LabelScheduleSource
 from taskiq_redis import RedisAsyncResultBackend, RedisStreamBroker
-
-from src.container.setup import setup_container
-from src.settings import Environment, get_settings
 
 
 def setup_taskiq_broker():
@@ -19,7 +18,7 @@ def setup_taskiq_broker():
             url=settings.env.redis.dsn.unicode_string(),
         ).with_result_backend(result_backend)
 
-    taskiq.setup_dishka(container=setup_container(settings), broker=broker)
+    taskiq.setup_dishka(container=setup_ios_container(settings), broker=broker)
 
     return broker
 

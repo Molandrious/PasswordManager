@@ -2,13 +2,24 @@ from enum import auto, StrEnum
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import AmqpDsn, DirectoryPath, Field, FilePath, PostgresDsn, RedisDsn, SecretBytes
+from pydantic import AmqpDsn, DirectoryPath, Field, FilePath, KafkaDsn, PostgresDsn, RedisDsn, SecretBytes
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_PATH = Path(__file__).parent.parent.resolve()
 
 # https://docs.pydantic.dev/latest/concepts/pydantic_settings/#environment-variable-names
 
+class ASGIProvider(StrEnum):
+    @classmethod
+    def _missing_(cls, value: str) -> str | None:
+        value_lower = value.lower()
+        for member in cls:
+            if member.name.lower() == value_lower:
+                return member
+        return None
+
+    GRANIAN = auto()
+    UVICORN = auto()
 
 class Environment(StrEnum):
     @classmethod
@@ -80,6 +91,12 @@ class RabbitSettings(_BaseSettings):
     dsn: AmqpDsn = Field(default=AmqpDsn('amqp://guest:guest@localhost:5672/'))
 
 
+class KafkaSettings(_BaseSettings):
+    model_config = SettingsConfigDict(env_prefix='KAFKA_')
+
+    dsn: KafkaDsn = Field(default=KafkaDsn('kafka://localhost:9092'))
+
+
 class EnvSettings(_BaseSettings):
     environment: Environment = Field(default=Environment.LOCAL)
 
@@ -89,11 +106,14 @@ class EnvSettings(_BaseSettings):
     postgres: PostgresSettings = PostgresSettings()
     redis: RedisSettings = RedisSettings()
     rabbit: RabbitSettings = RabbitSettings()
+    kafka: KafkaSettings = KafkaSettings()
 
+    asgi_provider: ASGIProvider = Field(default=ASGIProvider.UVICORN)
     secret_key: SecretBytes
 
 
 class Settings(BaseSettings):
+    # noinspection PyArgumentList
     env: EnvSettings = EnvSettings()
 
     root_path: DirectoryPath = Path(__file__).parent.parent.resolve()
@@ -116,4 +136,3 @@ def get_settings() -> Settings:
             settings.env.postgres.dsn = settings.env.tests.postgres_dsn
 
     return settings
-

@@ -9,12 +9,14 @@ from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from loguru import logger
 
-from src.container.setup import setup_container
-from src.integrations.faststream.rabbit_mq import rabbit_mq_broker
+from src.ios.setup import setup_ios_container
+from src.integrations.faststream.kafka import kafka_broker
+from src.integrations.faststream.rabbit import rabbit_router
 from src.integrations.taskiq.broker import taskiq_broker
 from src.logger import AppLogger
 from src.settings import get_settings
-from src.transport.rabbitmq.event_topic.handlers import rabbit_mq_router
+from src.transport.kafka.event_topic.handlers import kafka_router
+from src.transport.rabbit.event_topic.handlers import rabbit_mq_router
 from src.transport.rest import FastAPIContainerized
 from src.transport.rest.setup import setup_error_handlers, setup_middlewares, setup_routers
 
@@ -23,7 +25,6 @@ from src.transport.rest.setup import setup_error_handlers, setup_middlewares, se
 async def lifespan(
     app: FastAPIContainerized,
 ) -> AsyncGenerator[None]:
-    logger.info('Lifespan')
     await taskiq_broker.startup()
 
     yield
@@ -42,11 +43,15 @@ def setup_rest(app: FastAPI, container: AsyncContainer) -> None:
 
 
 def setup_rabbit(app: FastAPI, container: AsyncContainer) -> None:
-    rabbit_mq_broker.include_router(rabbit_mq_router)
+    rabbit_router.include_router(rabbit_mq_router)
+    app.include_router(rabbit_router)
+    setup_faststream_ioc(container, rabbit_router, auto_inject=True, finalize_container=False)
 
-    app.include_router(rabbit_mq_broker)
 
-    setup_faststream_ioc(container, rabbit_mq_broker, auto_inject=False, finalize_container=False)
+def setup_kafka(app: FastAPI, container: AsyncContainer) -> None:
+    kafka_broker.include_router(kafka_router)
+    app.include_router(kafka_broker)
+    setup_faststream_ioc(container, kafka_broker, auto_inject=True, finalize_container=False)
 
 
 def make_app(
@@ -55,14 +60,15 @@ def make_app(
     app = FastAPI(
         lifespan=lifespan,
         default_response_class=ORJSONResponse,
-        logger=AppLogger.make(),
+        logger=logger,
     )
 
-    container = container or setup_container(settings=get_settings())
+    AppLogger.make()
+    container = container or setup_ios_container(settings=get_settings())
 
     setup_rest(app=app, container=container)
     setup_rabbit(app=app, container=container)
+    # setup_kafka(app=app, ios=ios)
 
-    print(logger)
     return cast(FastAPIContainerized, app)
 

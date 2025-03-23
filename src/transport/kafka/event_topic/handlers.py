@@ -1,20 +1,18 @@
 from dishka import FromDishka
 from dishka.integrations.faststream import inject
-from faststream.rabbit import RabbitRouter
-
+from faststream.kafka import KafkaRouter
 from src.databases.sqlalchemy.orm import EventORM
-from src.integrations.faststream.rabbit_mq import RabbitQueues
+from src.integrations.faststream.kafka import KafkaTopics
 from src.models.event import EventType
 from src.repositories import EventRepository
-from src.transport.rabbitmq.event_topic.schemas import CreateEventSchema
+from src.transport.rabbit.event_topic.schemas import CreateEventSchema
 
-rabbit_mq_router = RabbitRouter()
+kafka_router = KafkaRouter()
 
 
-@rabbit_mq_router.subscriber(RabbitQueues.event)
-@rabbit_mq_router.publisher('response')
+@kafka_router.subscriber(KafkaTopics.event)
 @inject
-async def create_event_handler(
+async def create_event_kafka_handler(
     message: CreateEventSchema,
     event_repository: FromDishka[EventRepository],
 ):

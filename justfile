@@ -24,10 +24,10 @@ pre-commit-all:
 alembic-gen:
     alembic revision --autogenerate
 
-alembic-upg:
-    alembic upgrade head
+alembic-upg revision="head":
+    alembic upgrade {{ revision }}
 
-alembic-drop:
-    alembic downgrade base
+alembic-drop revision="base":
+    alembic downgrade {{ revision }}
 
 recreate-db: alembic-drop && alembic-gen

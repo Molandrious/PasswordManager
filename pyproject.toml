@@ -10,14 +10,16 @@ dependencies = [
     "dishka>=1.4.2",
     "epyxid>=0.3.3",
     "fastapi>=0.115.11",
-    "faststream[cli,rabbit]>=0.5.36",
+    "faststream[cli,rabbit,kafka]>=0.5.36",
     "granian>=2.0.1",
+    "httpx>=0.28.1",
     "loguru>=0.7.3",
     "orjson>=3.10.15",
     "pydantic-settings>=2.8.1",
     "pytest-randomly>=3.16.0",
     "sqlalchemy[asyncio]>=2.0.38",
     "taskiq>=0.11.13",
+    "taskiq-faststream>=0.2.0",
     "taskiq-redis>=1.0.3",
     "tzdata>=2025.1",
     "uvicorn>=0.34.0",
@@ -27,7 +29,6 @@ dependencies = [
 dev = [
     "alembic>=1.15.1",
     "black>=25.1.0",
-    "httpx>=0.28.1",
     "mypy>=1.15.0",
     "pre-commit>=4.1.0",
     "pytest>=8.3.5",
@@ -57,9 +58,8 @@ markers = [
 ]
 env = [
     "ENVIRONMENT=TESTS",
+    "LOGURU_LEVEL=ERROR"
 ]
-
-
 
 [tool.black]
 line-length = 120
@@ -77,6 +77,7 @@ exclude = '''
   | \.idea
 )
 '''
+
 
 [tool.ruff]
 target-version = 'py312'
@@ -154,7 +155,6 @@ lint.select = [
     "ASYNC", # flake8-async
 ]
 
-
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = [
     "fastapi.Depends",
@@ -162,7 +162,6 @@ extend-immutable-calls = [
     "fastapi.Query",
     "fastapi.params.Query",
 ]
-
 
 [tool.ruff.lint.flake8-type-checking]
 runtime-evaluated-base-classes = ["pydantic.BaseModel", "sqlalchemy.orm.DeclarativeBase"]
@@ -179,7 +178,6 @@ detect-same-package = true
 force-wrap-aliases = true
 combine-as-imports = true
 
-
 [tool.ruff.format]
 quote-style = "single"
 indent-style = "space"
@@ -187,3 +185,21 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 docstring-code-format = true
 docstring-code-line-length = "dynamic"
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_optional = true
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+allow_subclassing_any = true

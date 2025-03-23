@@ -10,15 +10,17 @@ from alembic import command
 from alembic.config import Config
 from dishka import AsyncContainer
 from fastapi import FastAPI
+from faststream.rabbit import RabbitBroker
 from httpx import ASGITransport, AsyncClient
 from loguru import logger
 from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 from pytest_docker.plugin import get_docker_services
-
 from src.bootstrap import FastAPIContainerized, lifespan, make_app
-from src.container.setup import setup_container
 from src.databases.sqlalchemy.client import SQLAlchemyClient
-from src.settings import get_settings, Settings
+from src.ios.setup import setup_ios_container
+from src.settings import Settings, get_settings
+from tests.fake_ios_providers.gateways import MockRabbitProvider
+from tests.fixtures import *  # noqa
 
 
 def pytest_configure(config):  # noqa
@@ -115,8 +117,11 @@ async def _do_migrations_for_test_db(
 
 
 @pytest.fixture(name='container', scope='session')
-async def test_container(settings: Settings) -> AsyncGenerator[AsyncContainer, Any]:
-    container = setup_container(settings=settings)
+async def test_ios_container(settings: Settings) -> AsyncGenerator[AsyncContainer, Any]:
+    container = setup_ios_container(
+        settings=settings,
+        rabbit_provider=MockRabbitProvider(),
+    )
     yield container
     await container.close()
 
@@ -151,3 +156,9 @@ async def _create_tables(request: pytest.FixtureRequest, container: AsyncContain
 async def test_client(app: FastAPI):
     async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
         yield client
+
+
+@pytest.fixture()
+async def rabbit_broker(app: FastAPIContainerized) -> AsyncGenerator[RabbitBroker, Any]:
+    async with (app.state.dishka_container() as container):
+        yield await container.get(RabbitBroker)

@@ -1,12 +1,12 @@
 import logging
 import sys
 from datetime import datetime
+from functools import lru_cache
 from zoneinfo import ZoneInfo
 
 from loguru import logger
 from loguru._defaults import LOGURU_FORMAT
 from loguru._recattrs import RecordLevel
-
 from src.settings import Settings
 
 LOGLEVEL_MAPPING = {
@@ -18,6 +18,14 @@ LOGLEVEL_MAPPING = {
     10: 'DEBUG',
     0: 'NOTSET',
 }
+
+
+FASTSTREAM_LOGS_FMT = (
+    '<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | '
+    '<level>{level: <8}</level> | '
+    '<magenta>{extra[faststream]}</magenta> - <level>{message}</level>'
+)
+
 
 class InnerAppLogsHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
@@ -79,13 +87,15 @@ class AppLogger:
         for logger_title in [
             '_granian',
             'granian.access',
+            'uvicorn',
+            'uvicorn.access',
             'fastapi',
             'sqlalchemy.engine.Engine',
         ]:
             _logger = logging.getLogger(logger_title)
             _logger.handlers = [InnerAppLogsHandler()]
 
-        logger.info(logging.Logger.manager.loggerDict)
+        # logger.info(logging.Logger.manager.loggerDict)
 
         for logger_title in []:
             _logger = logging.getLogger(logger_title)
@@ -105,6 +115,10 @@ class AppLogger:
                 '<level>{level: <8}</level>',
                 AppLogger.wrap_str_in_color(string='<level>{level: <8}</level>', color='fg #FFA500'),
             )
+
+        if record['extra'].get('faststream'):
+            return FASTSTREAM_LOGS_FMT + '\n'
+
         return custom_format
 
     @staticmethod
@@ -120,3 +134,4 @@ class AppLogger:
             return False
 
         return True
+

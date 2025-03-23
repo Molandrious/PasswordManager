@@ -1,7 +1,7 @@
 from dishka import FromDishka
-from starlette import status
-
+from faststream.rabbit import RabbitBroker
 from src.errors import ObjectNotFoundError
+from src.integrations.faststream.rabbit import RabbitQueues
 from src.services import PasswordService
 from src.transport.rest import errors
 from src.transport.rest.routers.password.schemas import (
@@ -10,6 +10,7 @@ from src.transport.rest.routers.password.schemas import (
     SearchPasswordsResponse,
 )
 from src.transport.rest.utils import DishkaAPIRouter
+from starlette import status
 
 password_router = DishkaAPIRouter(prefix='/password', tags=['password'])
 
@@ -22,8 +23,10 @@ async def create_service_password_handler(
     password_service: FromDishka[PasswordService],
     service_name: str,
     payload: CreatePasswordPayload,
+    rabbit_broker: FromDishka[RabbitBroker],
 ) -> None:
     await password_service.create_password_for_service(service_name=service_name, password=payload.password)
+    await rabbit_broker.publish({'message': f'Password created for {service_name}'}, queue=RabbitQueues.event)
 
 
 @password_router.get(
