@@ -6,7 +6,11 @@ from httpx import AsyncClient
 from src.repositories import PasswordRepository
 from src.transport.rabbit.event_topic.handlers import create_event_rabbit_handler
 from src.transport.rest import FastAPIContainerized
-from src.transport.rest.routers.password.handlers import get_service_password_handler, search_services_passwords_handler
+from src.transport.rest.routers.password.handlers import (
+    create_service_password_handler,
+    get_service_password_handler,
+    search_services_passwords_handler,
+)
 from starlette import status
 from tests.factories import ServicePasswordFactory
 
@@ -20,11 +24,11 @@ class TestCreateServicePasswordHandler:
         test_client: AsyncClient,
     ) -> None:
         self.client = test_client
-        self.url = partial(app.url_path_for, get_service_password_handler.__name__)
+        self.url = partial(app.url_path_for, create_service_password_handler.__name__)
         async with app.state.dishka_container(scope=Scope.REQUEST) as request_container:
             self.password_repository = await request_container.get(PasswordRepository)
 
-    async def test_new(self, rabbit_broker) -> None:
+    async def test_new(self) -> None:
         service_name = 'some_service'
         password = 'some_password'
 
@@ -45,9 +49,11 @@ class TestCreateServicePasswordHandler:
         )
 
         assert response.status_code == status.HTTP_201_CREATED, response.text
+        create_event_rabbit_handler.mock.assert_called_once_with(
+            {'message': f'Password created for {service_password.service_name}'}
+        )
 
         db_object = await self.password_repository.get_one_by(service_name=service_password.service_name)
-
         assert db_object.hashed_password != service_password.hashed_password
 
 

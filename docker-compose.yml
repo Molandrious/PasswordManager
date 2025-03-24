@@ -1,51 +1,71 @@
-version: "3.8"
 services:
-  #  db_postgres:
-  #    image: postgres:16.2-bookworm
-  #    env_file:
-  #      - .env.docker
-  #    volumes:
-  #      - ./postgres/data:/var/lib/postgresql/data
-  #    networks:
-  #      - intranet
-  #    ports:
-  #      - "5434:5432"
-  #    restart: unless-stopped
-  #    healthcheck:
-  #      test: [ "CMD", "pg_isready", "-U", "postgres" ]
-  #      interval: 5s
-  #      timeout: 10s
-  #      retries: 3
+  db_postgres:
+    image: postgres:16.2-bookworm
+    env_file:
+      - .env.docker
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+    networks:
+      - intranet
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    restart: unless-stopped
+    image: redis:latest
+    volumes:
+      - redis_data:/data
+    networks:
+      - intranet
+
+  rabbitmq:
+    image: rabbitmq:3.10.7-management
+    hostname: rabbitmq
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit log_levels [{connection,error},{default,error}] disk_free_limit 2147483648
+    volumes:
+      - rabbit_data:/var/lib/rabbitmq
+    networks:
+      - intranet
 
   app:
     &app
     build: .
     env_file:
       - .env.docker
-    restart: always
     ports:
-      - "${REST_PORT}:${REST_PORT}"
+      - "9000:8000"
     networks:
       - intranet
-  #    depends_on:
-  #      db_postgres:
-  #        condition: service_healthy
+    depends_on:
+      db_postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
 
   taskiq-worker:
     <<: *app
     ports: [ ]
-    command: [ taskiq, worker, -fsd, src.transport.taskiq:broker, -w, "1", --max-fails, "1" ]
-
-  redis:
-    restart: always
-    image: redis:latest
-    ports:
-      - "6380:6379"
-    volumes:
-      - redis_data:/data
+    command: [ taskiq, worker, -fsd, src.integrations.taskiq.broker:taskiq_broker,src.integrations.taskiq.worker_tasks,
+               -w, "1", --max-fails, "1" ]
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - intranet
 
 volumes:
   redis_data:
+  rabbit_data:
 
 networks:
   intranet:

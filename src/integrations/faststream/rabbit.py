@@ -1,5 +1,5 @@
 from faststream.rabbit import RabbitQueue
-from faststream.rabbit.fastapi import RabbitRouter
+from faststream.rabbit.fastapi import RabbitRouter as FastAPIRabbitRouter
 from src.integrations.faststream.logger import FastStreamLogger
 from src.settings import get_settings
 
@@ -8,7 +8,7 @@ class RabbitQueues:
     event = RabbitQueue(name='event')
 
 
-rabbit_router = RabbitRouter(
+rabbit_router = FastAPIRabbitRouter(
     url=get_settings().env.rabbit.dsn.unicode_string(),
     logger=FastStreamLogger(),
 )

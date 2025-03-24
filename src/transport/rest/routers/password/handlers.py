@@ -1,5 +1,7 @@
 from dishka import FromDishka
 from faststream.rabbit import RabbitBroker
+from loguru import logger
+
 from src.errors import ObjectNotFoundError
 from src.integrations.faststream.rabbit import RabbitQueues
 from src.services import PasswordService

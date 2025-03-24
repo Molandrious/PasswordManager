@@ -18,6 +18,9 @@ start-tsk-scheduler:
 test path="tests":
     uv run pytest {{ path }}
 
+coverage:
+    uv run pytest tests --cov=src --cov-report=term-missing --cov-report=html
+
 pre-commit-all:
     pre-commit run --all-files --show-diff-on-failure
 

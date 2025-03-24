@@ -16,8 +16,10 @@ dependencies = [
     "loguru>=0.7.3",
     "orjson>=3.10.15",
     "pydantic-settings>=2.8.1",
+    "pytest-cov>=6.0.0",
     "pytest-randomly>=3.16.0",
     "sqlalchemy[asyncio]>=2.0.38",
+    "uvloop==0.20.0; sys_platform != 'win32'",
     "taskiq>=0.11.13",
     "taskiq-faststream>=0.2.0",
     "taskiq-redis>=1.0.3",
@@ -60,6 +62,27 @@ env = [
     "ENVIRONMENT=TESTS",
     "LOGURU_LEVEL=ERROR"
 ]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/logger.py", "src/settings.py", "src/ios/*"]
+command_line = "-m pytest -vv"
+concurrency = ["greenlet", "thread"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self\\.debug",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "@(abc\\.)?abstractmethod",
+]
+show_missing = true
+skip_covered = true
+skip_empty = true
+precision = 2
 
 [tool.black]
 line-length = 120

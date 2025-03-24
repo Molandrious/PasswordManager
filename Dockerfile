@@ -1,19 +1,18 @@
-FROM python:3.12-slim
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-RUN apt-get update
-
-ENV PYTHONPATH /app
 WORKDIR /app
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+ENV PYTHONPATH /app
+ENV PATH="/app/.venv/bin:$PATH"
 
-RUN pip install --upgrade pip setuptools wheel
-RUN pip install uv
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --no-dev --frozen --no-install-project
 
-COPY pyproject.toml uv.lock ./
-COPY src src
+ADD . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
 
-RUN uv sync --no-dev
-
-CMD ["uv", "run", "--no-dev", "src/main.py"]
-
-
-
+ENTRYPOINT ["bash", "/app/entrypoint.sh"]
