@@ -38,4 +38,3 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_index(op.f('ix_password_id'), table_name='password')
     op.drop_table('password')
-

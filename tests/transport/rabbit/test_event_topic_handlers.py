@@ -5,7 +5,7 @@ from src.repositories import EventRepository
 from src.transport.rabbit.event_topic.schemas import CreateEventResponse
 
 
-@pytest.mark.require_db
+@pytest.mark.require_db()
 class TestCreateEventRabbitHandler:
     queue: RabbitQueue = RabbitQueues.event
 

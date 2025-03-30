@@ -15,7 +15,7 @@ from starlette import status
 from tests.factories import ServicePasswordFactory
 
 
-@pytest.mark.require_db
+@pytest.mark.require_db()
 class TestCreateServicePasswordHandler:
     @pytest.fixture(autouse=True)
     async def setup(
@@ -57,7 +57,7 @@ class TestCreateServicePasswordHandler:
         assert db_object.hashed_password != service_password.hashed_password
 
 
-@pytest.mark.require_db
+@pytest.mark.require_db()
 class TestGetServicePasswordHandler:
     @pytest.fixture(autouse=True)
     def setup(
@@ -83,7 +83,7 @@ class TestGetServicePasswordHandler:
         assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
 
 
-@pytest.mark.require_db
+@pytest.mark.require_db()
 class TestSearchServicesPasswordsHandler:
     @pytest.fixture(autouse=True)
     def setup(

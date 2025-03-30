@@ -11,6 +11,5 @@ class TestAddOne:
         async with app.state.dishka_container(scope=Scope.REQUEST) as request_container:
             self.task = await request_container.get(AddOneTask)
 
-
     async def test_ok(self):
         assert await self.task(10) == 11

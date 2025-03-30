@@ -1,7 +1,7 @@
 from functools import lru_cache
 
 from dishka import AsyncContainer, make_async_container
-from src.ios.providers import (
+from src.ioc.providers import (
     CoreProvider,
     RabbitProvider,
     RepositoriesProvider,

@@ -13,6 +13,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 ADD . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+    uv sync --locked --no-dev
 
-ENTRYPOINT ["bash", "/app/entrypoint.sh"]
+ENTRYPOINT [
+            "granian", "src/main:make_app",
+            "--factory",
+            "--interface", "asgi",
+            "--loop", "uvloop",
+            "--host", "0.0.0.0",
+             "--port", "8000"
+            ]

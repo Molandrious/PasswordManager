@@ -1,7 +1,6 @@
 import logging
 import sys
 from datetime import datetime
-from functools import lru_cache
 from zoneinfo import ZoneInfo
 
 from loguru import logger
@@ -134,4 +133,3 @@ class AppLogger:
             return False
 
         return True
-

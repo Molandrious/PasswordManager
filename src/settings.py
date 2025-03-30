@@ -9,6 +9,7 @@ ROOT_PATH = Path(__file__).parent.parent.resolve()
 
 # https://docs.pydantic.dev/latest/concepts/pydantic_settings/#environment-variable-names
 
+
 class ASGIProvider(StrEnum):
     @classmethod
     def _missing_(cls, value: str) -> str | None:
@@ -20,6 +21,7 @@ class ASGIProvider(StrEnum):
 
     GRANIAN = auto()
     UVICORN = auto()
+
 
 class Environment(StrEnum):
     @classmethod

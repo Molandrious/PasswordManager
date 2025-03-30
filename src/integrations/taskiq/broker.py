@@ -1,5 +1,5 @@
 from dishka.integrations import taskiq
-from src.ios.setup import setup_ios_container
+from src.ioc.setup import setup_ios_container
 from src.settings import Environment, get_settings
 from taskiq import InMemoryBroker, TaskiqScheduler
 from taskiq.schedule_sources import LabelScheduleSource
@@ -28,4 +28,3 @@ taskiq_scheduler = TaskiqScheduler(
     broker=taskiq_broker,
     sources=[LabelScheduleSource(taskiq_broker)],
 )
-

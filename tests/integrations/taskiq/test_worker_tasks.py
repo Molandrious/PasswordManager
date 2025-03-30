@@ -4,7 +4,7 @@ from src.integrations.taskiq.worker_tasks import add_one_task, create_event_task
 
 
 class TestWorkerTasks:
-    @pytest.mark.require_db
+    @pytest.mark.require_db()
     async def test_create_event_task(self) -> None:
         task = await create_event_task.kiq()
         await task.wait_result(timeout=2)

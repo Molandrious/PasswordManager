@@ -17,13 +17,13 @@ from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 from pytest_docker.plugin import get_docker_services
 from src.bootstrap import FastAPIContainerized, lifespan, make_app
 from src.databases.sqlalchemy.client import SQLAlchemyClient
-from src.ios.setup import setup_ios_container
+from src.ioc.setup import setup_ios_container
 from src.settings import Settings, get_settings
 from tests.fake_ios_providers.gateways import MockRabbitProvider
 from tests.fixtures import *  # noqa
 
 
-def pytest_configure(config):  # noqa
+def pytest_configure(config) -> None:  # noqa
     logger.debug('Configuring pytest...')
 
 
@@ -160,5 +160,5 @@ async def test_client(app: FastAPI):
 
 @pytest.fixture()
 async def rabbit_broker(app: FastAPIContainerized) -> AsyncGenerator[RabbitBroker, Any]:
-    async with (app.state.dishka_container() as container):
+    async with app.state.dishka_container() as container:
         yield await container.get(RabbitBroker)

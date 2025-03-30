@@ -1,4 +1,3 @@
-
 from granian.constants import Interfaces
 
 from src.bootstrap import make_app  # noqa
@@ -10,6 +9,7 @@ def main() -> None:
 
     if settings.env.asgi_provider == ASGIProvider.GRANIAN:
         from granian import Granian
+
         Granian(
             'main:make_app',
             address=settings.env.rest.host,
@@ -19,6 +19,7 @@ def main() -> None:
         ).serve()
     elif settings.env.asgi_provider == ASGIProvider.UVICORN:
         import uvicorn
+
         uvicorn.run(
             app='main:make_app',
             host=settings.env.rest.host,

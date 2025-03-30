@@ -6,7 +6,7 @@ from src.services.tasks.create_event import CreateEventTask
 from src.transport.rest import FastAPIContainerized
 
 
-@pytest.mark.require_db
+@pytest.mark.require_db()
 class TestCreateEvent:
     @pytest.fixture(autouse=True)
     async def setup(self, app: FastAPIContainerized):

@@ -29,7 +29,7 @@ class BaseORM(BaseDeclarative):
     @classmethod
     @declared_attr.directive
     def __tablename__(cls):
-        return to_snake(cls.__name__.rstrip("ORM"))
+        return to_snake(cls.__name__.rstrip('ORM'))
 
     id: Mapped[UUID] = mapped_column(
         primary_key=True,
@@ -41,17 +41,17 @@ class BaseORM(BaseDeclarative):
     )
 
     created_at: Mapped[datetime] = mapped_column(
-        insert_default=lambda: datetime.now(tz=ZoneInfo("Europe/Moscow")),
+        insert_default=lambda: datetime.now(tz=ZoneInfo('Europe/Moscow')),
         nullable=False,
         sort_order=-2,
     )
 
     updated_at: Mapped[datetime] = mapped_column(
-        insert_default=lambda: datetime.now(tz=ZoneInfo("Europe/Moscow")),
-        onupdate=lambda: datetime.now(tz=ZoneInfo("Europe/Moscow")),
+        insert_default=lambda: datetime.now(tz=ZoneInfo('Europe/Moscow')),
+        onupdate=lambda: datetime.now(tz=ZoneInfo('Europe/Moscow')),
         nullable=True,
         sort_order=-1,
     )
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} | {self.__dict__}>"
+        return f'<{self.__class__.__name__} | {self.__dict__}>'

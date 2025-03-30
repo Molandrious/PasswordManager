@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from loguru import logger
 
-from src.ios.setup import setup_ios_container
+from src.ioc.setup import setup_ios_container
 from src.integrations.faststream.kafka import kafka_broker
 from src.integrations.faststream.rabbit import rabbit_router
 from src.integrations.taskiq.broker import taskiq_broker
@@ -68,7 +68,6 @@ def make_app(
 
     setup_rest(app=app, container=container)
     setup_rabbit(app=app, container=container)
-    # setup_kafka(app=app, ios=ios)
+    # setup_kafka(app=app, ioc=ioc)
 
     return cast(FastAPIContainerized, app)
-
